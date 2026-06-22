@@ -20,33 +20,22 @@
 
     <form id="formCapacitacion" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-5">
       
-      <div class="grid grid-cols-2 gap-3">
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Filtrar Turno</label>
-          <select id="filtroTurno" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-300 focus:outline-none">
-            <option value="TODOS">Todos</option>
-            <option value="Turno 1">Turno 1</option>
-            <option value="Turno 2">Turno 2</option>
-            <option value="Turno 3">Turno 3</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-blue-300 uppercase mb-1">1. Personal</label>
-          <select id="selectPersonal" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs focus:outline-none">
-            <option value="">Cargando...</option>
-          </select>
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-blue-300 uppercase mb-1">1. Seleccionar Colaborador</label>
+        <select id="selectPersonal" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm focus:outline-none">
+          <option value="">Cargando lista de personal...</option>
+        </select>
       </div>
 
       <div id="seccionMatriz" class="hidden bg-slate-900/60 p-4 rounded-lg border border-slate-700 space-y-3">
-        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Diagnóstico del Colaborador:</h4>
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Estatus de Capacitación del Colaborador:</h4>
         <div class="grid grid-cols-2 gap-2 text-xs">
           <div>
-            <span class="text-emerald-400 font-bold block mb-1">✓ Completados:</span>
+            <span class="text-emerald-400 font-bold block mb-1">✓ Cursos Acreditados:</span>
             <ul id="listaHechos" class="list-disc pl-4 space-y-1 text-slate-300"></ul>
           </div>
           <div>
-            <span class="text-red-400 font-bold block mb-1">⚠ Faltantes:</span>
+            <span class="text-red-400 font-bold block mb-1">⚠ Cursos Pendientes:</span>
             <ul id="listaFaltantes" class="list-disc pl-4 space-y-1 text-slate-300"></ul>
           </div>
         </div>
@@ -70,7 +59,7 @@
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Instructor</label>
-          <input type="text" id="instructor" required placeholder="Firma de Instructor" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none">
+          <input type="text" id="instructor" required placeholder="Nombre del Instructor" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none">
         </div>
       </div>
 
@@ -96,7 +85,7 @@
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmHUPw0rdhpxoFISxXG_BpN1TkPBDI3RmNuldX6P1A0RQ73JD_uOf5Yz1NOd2APAsr7A/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzFtPCG21JdTGAnhBv5lhN7NBmJQ9jaVXRN3WFm5LUFSFKolg8kXW1f6NJYXCiKuFqN/exec";
 
     let cacheCatalogos = { personal: [], actividades: [] };
     const canvas = document.getElementById('canvasFirma');
@@ -123,29 +112,23 @@
 
     function cargarFormulario(catalogos) {
       cacheCatalogos = catalogos;
+      
+      // Renderizar Cursos
       const selectActividad = document.getElementById('selectActividad');
       selectActividad.innerHTML = '<option value="">-- Seleccione el Curso --</option>';
       catalogos.actividades.forEach(act => {
         selectActividad.innerHTML += `<option value="${act.id}">${act.nombre}</option>`;
       });
-      filtrarYRenderizarPersonal();
-    }
 
-    document.getElementById('filtroTurno').addEventListener('change', filtrarYRenderizarPersonal);
-
-    function filtrarYRenderizarPersonal() {
-      const turnoSeleccionado = document.getElementById('filtroTurno').value;
+      // Renderizar Personal Completo de forma directa
       const selectPersonal = document.getElementById('selectPersonal');
-      selectPersonal.innerHTML = '<option value="">-- Seleccione --</option>';
-      
-      cacheCatalogos.personal.forEach(pers => {
-        if (turnoSeleccionado === 'TODOS' || pers.turno === turnoSeleccionado) {
-          selectPersonal.innerHTML += `<option value="${pers.id}" data-nombre="${pers.nombre}">${pers.nombre}</option>`;
-        }
+      selectPersonal.innerHTML = '<option value="">-- Seleccione un Colaborador --</option>';
+      catalogos.personal.forEach(pers => {
+        selectPersonal.innerHTML += `<option value="${pers.id}" data-nombre="${pers.nombre}">${pers.nombre}</option>`;
       });
-      document.getElementById('seccionMatriz').classList.add('hidden');
     }
 
+    // EVENTO DE SEGUIMIENTO: Se ejecuta inmediatamente al cambiar de empleado
     document.getElementById('selectPersonal').addEventListener('change', function() {
       const idEmpleado = this.value;
       if(!idEmpleado) {
@@ -157,7 +140,7 @@
       document.getElementById('listaFaltantes').innerHTML = '<li>Buscando...</li>';
       document.getElementById('seccionMatriz').classList.remove('hidden');
       
-      // Consulta robusta usando GET alternativo para saltarse las restricciones estrictas de redirección CORS en POST
+      // Consulta vía GET para rastrear el estatus de cursos del empleado
       fetch(`${WEB_APP_URL}?accion=obtenerEstatus&idEmpleado=${idEmpleado}`)
         .then(res => res.json())
         .then(estatus => {
@@ -171,8 +154,8 @@
           estatus.faltantes.forEach(c => listaFaltantes.innerHTML += `<li>${c}</li>`);
         })
         .catch(() => {
-          document.getElementById('listaHechos').innerHTML = '<li class="text-red-400">Error al consultar matriz</li>';
-          document.getElementById('listaFaltantes').innerHTML = '<li class="text-red-400">Error al consultar matriz</li>';
+          document.getElementById('listaHechos').innerHTML = '<li class="text-red-400">Error al consultar historial</li>';
+          document.getElementById('listaFaltantes').innerHTML = '<li class="text-red-400">Error al consultar historial</li>';
         });
     });
 
@@ -222,7 +205,6 @@
         firmaBase64: canvas.toDataURL()
       };
 
-      // Se usa modo 'no-cors' con 'text/plain' para que Google Apps Script acepte el POST desde servidores externos sin fallas de red
       fetch(WEB_APP_URL, {
         method: "POST",
         mode: "no-cors",
@@ -236,7 +218,7 @@
         notif.innerText = "REGISTRO DE CAPACITACIÓN ENVIADO CON ÉXITO";
         document.getElementById('formCapacitacion').reset();
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        filtrarYRenderizarPersonal();
+        document.getElementById('seccionMatriz').classList.add('hidden');
       })
       .catch(() => {
         btn.disabled = false;
