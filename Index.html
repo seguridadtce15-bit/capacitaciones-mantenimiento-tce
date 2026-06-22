@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Capacitación y Control de Firmas</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <style>
+    .glow-blue { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+    canvas { touch-action: none; }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen pb-12 font-sans">
+
+  <div class="max-w-xl mx-auto p-4">
+    
+    <header class="text-center my-6 border-b border-slate-700 pb-4">
+      <h1 class="text-xl font-bold tracking-wider text-blue-400 uppercase">Terminales de Cargas Especializadas</h1>
+      <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest">Matriz de Cumplimiento y Registro Digital</p>
+    </header>
+
+    <form id="formCapacitacion" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-5">
+      
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Filtrar Turno</label>
+          <select id="filtroTurno" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-slate-300 focus:outline-none">
+            <option value="TODOS">Todos</option>
+            <option value="Turno 1">Turno 1</option>
+            <option value="Turno 2">Turno 2</option>
+            <option value="Turno 3">Turno 3</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-blue-300 uppercase mb-1">1. Personal</label>
+          <select id="selectPersonal" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2 text-xs focus:outline-none">
+            <option value="">Cargando...</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="seccionMatriz" class="hidden bg-slate-900/60 p-4 rounded-lg border border-slate-700 space-y-3">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Diagnóstico del Colaborador:</h4>
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <span class="text-emerald-400 font-bold block mb-1">✓ Completados:</span>
+            <ul id="listaHechos" class="list-disc pl-4 space-y-1 text-slate-300"></ul>
+          </div>
+          <div>
+            <span class="text-red-400 font-bold block mb-1">⚠ Faltantes:</span>
+            <ul id="listaFaltantes" class="list-disc pl-4 space-y-1 text-slate-300"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-blue-300 uppercase mb-2">2. Seleccionar Curso Impartido</label>
+        <select id="selectActividad" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm focus:outline-none">
+          <option value="">Cargando cursos...</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Estatus</label>
+          <select id="estatus" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none">
+            <option value="Aprobado">Aprobado</option>
+            <option value="Pendiente">Pendiente</option>
+            <option value="Reprobado">Reprobado</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Instructor</label>
+          <input type="text" id="instructor" required placeholder="Firma de Instructor" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none">
+        </div>
+      </div>
+
+      <div class="border border-slate-700 p-3 rounded-lg bg-slate-900">
+        <div class="flex justify-between items-center mb-2">
+          <label class="block text-xs font-semibold text-amber-400 uppercase tracking-wider">3. Firma Digital del Colaborador</label>
+          <button type="button" id="btnLimpiarFirma" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded uppercase">Limpiar</button>
+        </div>
+        <div class="bg-white rounded-lg overflow-hidden">
+          <canvas id="canvasFirma" class="w-full h-32 bg-white cursor-crosshair"></canvas>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1 text-center italic">Al firmar, el trabajador valida la asistencia y acreditación de la actividad.</p>
+      </div>
+
+      <button type="submit" id="btnGuardar" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg uppercase tracking-wider text-sm transition-all glow-blue">
+        Registrar y Guardar Evidencia
+      </button>
+
+    </form>
+
+    <div id="notificacion" class="hidden mt-4 p-4 rounded-lg text-sm text-center font-bold uppercase tracking-wide"></div>
+
+  </div>
+
+  <script>
+    // URL DE TU GOOGLE APPS SCRIPT (CAMBIA ESTO)
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwAFv_W2ltZHUatszuPYOrwsQJRkvmaCcoAQ6nMuvu2oXlR_4E9VAL2m8NjMu-HBuASAw/exec";
+
+    let cacheCatalogos = { personal: [], actividades: [] };
+    const canvas = document.getElementById('canvasFirma');
+    const ctx = canvas.getContext('2d');
+    let dibujando = false;
+
+    function ajustarCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = 128; 
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#000000";
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      ajustarCanvas();
+      // Consumir API mediante GET para traer catálogos
+      fetch(WEB_APP_URL)
+        .then(res => res.json())
+        .then(cargarFormulario)
+        .catch(() => {
+           document.getElementById('notificacion').className = "mt-4 p-4 rounded-lg text-sm text-center bg-red-900/50 border border-red-500 text-red-200 block";
+           document.getElementById('notificacion').innerText = "ERROR DE CONEXIÓN CON LA API";
+        });
+    });
+
+    function cargarFormulario(catalogos) {
+      cacheCatalogos = catalogos;
+      const selectActividad = document.getElementById('selectActividad');
+      selectActividad.innerHTML = '<option value="">-- Seleccione el Curso --</option>';
+      catalogos.actividades.forEach(act => {
+        selectActividad.innerHTML += `<option value="${act.id}">${act.nombre}</option>`;
+      });
+      filtrarYRenderizarPersonal();
+    }
+
+    document.getElementById('filtroTurno').addEventListener('change', filtrarYRenderizarPersonal);
+
+    function filtrarYRenderizarPersonal() {
+      const turnoSeleccionado = document.getElementById('filtroTurno').value;
+      const selectPersonal = document.getElementById('selectPersonal');
+      selectPersonal.innerHTML = '<option value="">-- Seleccione --</option>';
+      
+      cacheCatalogos.personal.forEach(pers => {
+        if (turnoSeleccionado === 'TODOS' || pers.turno === turnoSeleccionado) {
+          selectPersonal.innerHTML += `<option value="${pers.id}" data-nombre="${pers.nombre}">${pers.nombre}</option>`;
+        }
+      });
+      document.getElementById('seccionMatriz').classList.add('hidden');
+    }
+
+    // Buscar estatus de cursos mediante POST
+    document.getElementById('selectPersonal').addEventListener('change', function() {
+      const idEmpleado = this.value;
+      if(!idEmpleado) {
+        document.getElementById('seccionMatriz').classList.add('hidden');
+        return;
+      }
+
+      document.getElementById('listaHechos').innerHTML = '<li>Buscando...</li>';
+      document.getElementById('listaFaltantes').innerHTML = '<li>Buscando...</li>';
+      document.getElementById('seccionMatriz').classList.remove('hidden');
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ accion: "obtenerEstatus", idEmpleado: idEmpleado })
+      })
+      .then(res => res.json())
+      .then(estatus => {
+        const listaHechos = document.getElementById('listaHechos');
+        const listaFaltantes = document.getElementById('listaFaltantes');
+        
+        listaHechos.innerHTML = estatus.completados.length ? '' : '<li class="text-slate-500">Ninguno</li>';
+        estatus.completados.forEach(c => listaHechos.innerHTML += `<li>${c}</li>`);
+        
+        listaFaltantes.innerHTML = estatus.faltantes.length ? '' : '<li class="text-slate-500">Ninguno (Esquema Completo)</li>';
+        estatus.faltantes.forEach(c => listaFaltantes.innerHTML += `<li>${c}</li>`);
+      });
+    });
+
+    // Eventos de dibujo del Canvas
+    const obtenerPosicion = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return { x: clientX - rect.left, y: clientY - rect.top };
+    };
+
+    const iniciarDibujo = (e) => { dibujando = true; ctx.beginPath(); const pos = obtenerPosicion(e); ctx.moveTo(pos.x, pos.y); };
+    const dibujar = (e) => { if (!dibujando) return; e.preventDefault(); const pos = obtenerPosicion(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
+    const pararDibujo = () => { dibujando = false; };
+
+    canvas.addEventListener('mousedown', iniciarDibujo);
+    canvas.addEventListener('mousemove', dibujar);
+    window.addEventListener('mouseup', pararDibujo);
+    canvas.addEventListener('touchstart', iniciarDibujo);
+    canvas.addEventListener('touchmove', dibujar);
+    window.addEventListener('touchend', pararDibujo);
+
+    document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    // Enviar formulario a la API vía POST
+    document.getElementById('formCapacitacion').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnGuardar');
+      const notif = document.getElementById('notificacion');
+      
+      btn.disabled = true;
+      btn.innerText = "GUARDANDO REGISTRO Y FIRMA...";
+      notif.classList.add('hidden');
+
+      const selectP = document.getElementById('selectPersonal');
+      const optionP = selectP.options[selectP.selectedIndex];
+      const selectA = document.getElementById('selectActividad');
+      const optionA = selectA.options[selectA.selectedIndex];
+
+      const payload = {
+        idEmpleado: selectP.value,
+        nombreEmpleado: optionP.getAttribute('data-nombre'),
+        idActividad: selectA.value,
+        nombreActividad: optionA.text,
+        instructor: document.getElementById('instructor').value,
+        estatus: document.getElementById('estatus').value,
+        firmaBase64: canvas.toDataURL()
+      };
+
+      fetch(WEB_APP_URL, {
+        method: "POST",
+        body: JSON.stringify({ accion: "guardar", payload: payload })
+      })
+      .then(res => res.json())
+      .then(response => {
+        btn.disabled = false;
+        btn.innerText = "Registrar y Guardar Evidencia";
+        notif.className = response.exito ? "mt-4 p-4 rounded-lg text-sm text-center bg-emerald-900/50 border border-emerald-500 text-emerald-200 block" : "mt-4 p-4 rounded-lg text-sm text-center bg-red-900/50 border border-red-500 text-red-200 block";
+        if(response.exito) {
+          document.getElementById('formCapacitacion').reset();
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          filtrarYRenderizarPersonal();
+        }
+        notif.innerText = response.mensaje.toUpperCase();
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.innerText = "Registrar y Guardar Evidencia";
+        notif.className = "mt-4 p-4 rounded-lg text-sm text-center bg-red-900/50 border border-red-500 text-red-200 block";
+        notif.innerText = "ERROR AL PROCESAR EL ENVÍO";
+      });
+    });
+  </script>
+</body>
+</html>
