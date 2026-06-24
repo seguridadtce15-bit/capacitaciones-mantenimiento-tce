@@ -2,90 +2,102 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Capacitación y Control de Firmas</title>
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <style>
-    .glow-blue { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+    .glow-blue { box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4); }
     canvas { touch-action: none; }
+    /* Optimización de scrollbars finos para móvil */
+    .custom-scroll::-webkit-scrollbar { width: 4px; }
+    .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen pb-12 font-sans">
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500/30">
 
-  <div class="max-w-xl mx-auto p-4">
+  <div class="max-w-md mx-auto p-3 sm:p-4">
     
-    <header class="text-center my-6 border-b border-slate-700 pb-4">
-      <h1 class="text-xl font-bold tracking-wider text-blue-400 uppercase">Terminales de Cargas Especializadas</h1>
-      <p class="text-xs text-slate-400 mt-1 uppercase tracking-widest">Matriz de Cumplimiento y Registro Digital</p>
+    <header class="text-center my-4 border-b border-slate-800 pb-3">
+      <h1 class="text-lg font-black tracking-wider text-blue-400 uppercase">Terminales de Cargas Especializadas</h1>
+      <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-semibold">Matriz de Cumplimiento Digital</p>
     </header>
 
-    <form id="formCapacitacion" class="bg-slate-800 p-5 rounded-xl border border-slate-700 shadow-xl space-y-5">
+    <form id="formCapacitacion" class="bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-700/70 shadow-2xl space-y-4">
       
-      <div>
-        <label class="block text-xs font-semibold text-blue-300 uppercase mb-1">1. Seleccionar Colaborador</label>
-        <select id="selectPersonal" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm focus:outline-none">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-blue-300 uppercase tracking-wide">1. Colaborador</label>
+        
+        <input type="text" id="buscarPersonal" placeholder="🔍 Escribe para buscar trabajador..." 
+               class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none transition-colors placeholder:text-slate-500">
+        
+        <select id="selectPersonal" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
           <option value="">Cargando lista de personal...</option>
         </select>
       </div>
 
-      <div id="seccionMatriz" class="hidden bg-slate-900/60 p-4 rounded-lg border border-slate-700 space-y-3">
-        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Estatus de Capacitación del Colaborador:</h4>
-        <div class="grid grid-cols-2 gap-2 text-xs">
-          <div>
-            <span class="text-emerald-400 font-bold block mb-1">✓ Cursos Acreditados:</span>
-            <ul id="listaHechos" class="list-disc pl-4 space-y-1 text-slate-300"></ul>
+      <div id="seccionMatriz" class="hidden bg-slate-950/80 p-3 rounded-lg border border-slate-800 space-y-2.5 animated fadeIn">
+        <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1">Estatus del Colaborador en Turno:</h4>
+        <div class="grid grid-cols-1 gap-2.5 text-xs">
+          <div class="bg-slate-900/60 p-2 rounded border border-emerald-950">
+            <span class="text-emerald-400 font-bold block mb-1 flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Cursos Acreditados:
+            </span>
+            <ul id="listaHechos" class="list-none pl-1 space-y-1 text-slate-300 max-h-24 overflow-y-auto custom-scroll"></ul>
           </div>
-          <div>
-            <span class="text-red-400 font-bold block mb-1">⚠ Cursos Pendientes:</span>
-            <ul id="listaFaltantes" class="list-disc pl-4 space-y-1 text-slate-300"></ul>
+          <div class="bg-slate-900/60 p-2 rounded border border-red-950">
+            <span class="text-red-400 font-bold block mb-1 flex items-center gap-1">
+              <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Cursos Pendientes:
+            </span>
+            <ul id="listaFaltantes" class="list-none pl-1 space-y-1 text-slate-300 max-h-28 overflow-y-auto custom-scroll"></ul>
           </div>
         </div>
       </div>
 
-      <div>
-        <label class="block text-xs font-semibold text-blue-300 uppercase mb-2">2. Seleccionar Curso Impartido</label>
-        <select id="selectActividad" required class="w-full bg-slate-900 border border-slate-600 rounded-lg p-3 text-sm focus:outline-none">
+      <div class="space-y-1.5">
+        <label class="block text-xs font-bold text-blue-300 uppercase tracking-wide">2. Curso Impartido</label>
+        <select id="selectActividad" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
           <option value="">Cargando cursos...</option>
         </select>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-2.5">
         <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Estatus</label>
-          <select id="estatus" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none">
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Estatus</label>
+          <select id="estatus" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500">
             <option value="Aprobado">Aprobado</option>
             <option value="Pendiente">Pendiente</option>
             <option value="Reprobado">Reprobado</option>
           </select>
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-400 uppercase mb-1">Instructor</label>
-          <input type="text" id="instructor" required placeholder="Nombre del Instructor" class="w-full bg-slate-900 border border-slate-600 rounded-lg p-2.5 text-sm focus:outline-none">
+          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Instructor</label>
+          <input type="text" id="instructor" required placeholder="Nombre" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500 text-slate-200 placeholder:text-slate-600">
         </div>
       </div>
 
-      <div class="border border-slate-700 p-3 rounded-lg bg-slate-900">
-        <div class="flex justify-between items-center mb-2">
-          <label class="block text-xs font-semibold text-amber-400 uppercase tracking-wider">3. Firma Digital del Colaborador</label>
-          <button type="button" id="btnLimpiarFirma" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-2 py-1 rounded uppercase">Limpiar</button>
+      <div class="border border-slate-700/60 p-2.5 rounded-lg bg-slate-950/40 space-y-2">
+        <div class="flex justify-between items-center">
+          <label class="block text-xs font-bold text-amber-400 uppercase tracking-wide">3. Firma del Trabajador</label>
+          <button type="button" id="btnLimpiarFirma" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 px-2.5 py-1 rounded font-bold uppercase tracking-wider transition-colors">Limpiar</button>
         </div>
-        <div class="bg-white rounded-lg overflow-hidden">
-          <canvas id="canvasFirma" class="w-full h-32 bg-white cursor-crosshair"></canvas>
+        <div class="bg-white rounded-lg overflow-hidden border border-slate-700 shadow-inner">
+          <canvas id="canvasFirma" class="w-full h-28 bg-white cursor-crosshair"></canvas>
         </div>
-        <p class="text-[10px] text-slate-400 mt-1 text-center italic">Al firmar, el trabajador valida la asistencia y acreditación de la actividad.</p>
+        <p class="text-[9px] text-slate-500 text-center italic leading-none">Dibuje la firma directamente con el dedo sobre el recuadro blanco.</p>
       </div>
 
-      <button type="submit" id="btnGuardar" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-4 rounded-lg uppercase tracking-wider text-sm transition-all glow-blue">
+      <button type="submit" id="btnGuardar" class="w-full bg-blue-600 active:bg-blue-700 hover:bg-blue-500 text-white font-black py-3.5 px-4 rounded-xl uppercase tracking-wider text-xs transition-all glow-blue cursor-pointer">
         Registrar y Guardar Evidencia
       </button>
 
     </form>
 
-    <div id="notificacion" class="hidden mt-4 p-4 rounded-lg text-sm text-center font-bold uppercase tracking-wide"></div>
+    <div id="notificacion" class="hidden mt-3 p-3 rounded-lg text-xs text-center font-bold uppercase tracking-wide shadow-md"></div>
 
   </div>
 
   <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwx3EGJBTeLXG5HIGx0PLPO7B8cyfBZH1uykRt3xFCwj0eHCIL7mid79TpnjbyoItC-/exec";
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwNS4Wd29wAwimEFFkZ21SPCI-py4tAySitDoV6vNfZaQ7wu6V3BH_40J8pbb07_KqKzw/exec";
 
     let cacheCatalogos = { personal: [], actividades: [] };
     const canvas = document.getElementById('canvasFirma');
@@ -94,9 +106,11 @@
 
     function ajustarCanvas() {
       canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = 128; 
+      canvas.height = 112; // Altura ideal compacta para móviles
       ctx.lineWidth = 3;
       ctx.strokeStyle = "#000000";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -105,30 +119,46 @@
         .then(res => res.json())
         .then(cargarFormulario)
         .catch(() => {
-           document.getElementById('notificacion').className = "mt-4 p-4 rounded-lg text-sm text-center bg-red-900/50 border border-red-500 text-red-200 block";
+           document.getElementById('notificacion').className = "mt-3 p-3 rounded-lg text-xs text-center bg-red-950 border border-red-500 text-red-200 block";
            document.getElementById('notificacion').innerText = "ERROR DE CONEXIÓN CON LA API";
         });
     });
 
+    // Evento para ajustar si rotan la pantalla del celular
+    window.addEventListener('resize', ajustarCanvas);
+
     function cargarFormulario(catalogos) {
       cacheCatalogos = catalogos;
       
-      // Renderizar Cursos
       const selectActividad = document.getElementById('selectActividad');
       selectActividad.innerHTML = '<option value="">-- Seleccione el Curso --</option>';
       catalogos.actividades.forEach(act => {
         selectActividad.innerHTML += `<option value="${act.id}">${act.nombre}</option>`;
       });
 
-      // Renderizar Personal Completo de forma directa
+      renderizarListaPersonal(catalogos.personal);
+    }
+
+    // Función core para renderizar el listado
+    function renderizarListaPersonal(lista) {
       const selectPersonal = document.getElementById('selectPersonal');
       selectPersonal.innerHTML = '<option value="">-- Seleccione un Colaborador --</option>';
-      catalogos.personal.forEach(pers => {
+      lista.forEach(pers => {
         selectPersonal.innerHTML += `<option value="${pers.id}" data-nombre="${pers.nombre}">${pers.nombre}</option>`;
       });
     }
 
-    // EVENTO DE SEGUIMIENTO: Se ejecuta inmediatamente al cambiar de empleado
+    // FILTRO EN TIEMPO REAL: Evita saturar la vista del usuario
+    document.getElementById('buscarPersonal').addEventListener('input', function() {
+      const termino = this.value.toLowerCase().trim();
+      if (!termino) {
+        renderizarListaPersonal(cacheCatalogos.personal);
+        return;
+      }
+      const filtrados = cacheCatalogos.personal.filter(p => p.nombre.toLowerCase().includes(termino));
+      renderizarListaPersonal(filtrados);
+    });
+
     document.getElementById('selectPersonal').addEventListener('change', function() {
       const idEmpleado = this.value;
       if(!idEmpleado) {
@@ -136,29 +166,29 @@
         return;
       }
 
-      document.getElementById('listaHechos').innerHTML = '<li>Buscando...</li>';
-      document.getElementById('listaFaltantes').innerHTML = '<li>Buscando...</li>';
+      document.getElementById('listaHechos').innerHTML = '<li class="text-[11px] text-slate-400 italic">Buscando en historial...</li>';
+      document.getElementById('listaFaltantes').innerHTML = '<li class="text-[11px] text-slate-400 italic">Buscando en historial...</li>';
       document.getElementById('seccionMatriz').classList.remove('hidden');
       
-      // Consulta vía GET para rastrear el estatus de cursos del empleado
       fetch(`${WEB_APP_URL}?accion=obtenerEstatus&idEmpleado=${idEmpleado}`)
         .then(res => res.json())
         .then(estatus => {
           const listaHechos = document.getElementById('listaHechos');
           const listaFaltantes = document.getElementById('listaFaltantes');
           
-          listaHechos.innerHTML = estatus.completados.length ? '' : '<li class="text-slate-500">Ninguno</li>';
-          estatus.completados.forEach(c => listaHechos.innerHTML += `<li>${c}</li>`);
+          listaHechos.innerHTML = estatus.completados.length ? '' : '<li class="text-slate-500 italic">Ningún curso registrado</li>';
+          estatus.completados.forEach(c => listaHechos.innerHTML += `<li class="py-0.5 border-b border-slate-900/40 text-slate-200">✓ ${c}</li>`);
           
-          listaFaltantes.innerHTML = estatus.faltantes.length ? '' : '<li class="text-slate-500">Ninguno (Esquema Completo)</li>';
-          estatus.faltantes.forEach(c => listaFaltantes.innerHTML += `<li>${c}</li>`);
+          listaFaltantes.innerHTML = estatus.faltantes.length ? '' : '<li class="text-emerald-400 font-semibold italic">Esquema 100% Completo</li>';
+          estatus.faltantes.forEach(c => listaFaltantes.innerHTML += `<li class="py-0.5 border-b border-slate-900/40 text-slate-300">📌 ${c}</li>`);
         })
         .catch(() => {
-          document.getElementById('listaHechos').innerHTML = '<li class="text-red-400">Error al consultar historial</li>';
-          document.getElementById('listaFaltantes').innerHTML = '<li class="text-red-400">Error al consultar historial</li>';
+          document.getElementById('listaHechos').innerHTML = '<li class="text-red-400">Error de conexión</li>';
+          document.getElementById('listaFaltantes').innerHTML = '<li class="text-red-400">Error de conexión</li>';
         });
     });
 
+    // Control de trazos táctiles optimizados (Sin saltos ni retrasos en iOS/Android)
     const obtenerPosicion = (e) => {
       const rect = canvas.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -167,14 +197,14 @@
     };
 
     const iniciarDibujo = (e) => { dibujando = true; ctx.beginPath(); const pos = obtenerPosicion(e); ctx.moveTo(pos.x, pos.y); };
-    const dibujar = (e) => { if (!dibujando) return; e.preventDefault(); const pos = obtenerPosicion(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
+    const dibujar = (e) => { if (!dibujando) return; if(e.touches) e.preventDefault(); const pos = obtenerPosicion(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
     const pararDibujo = () => { dibujando = false; };
 
     canvas.addEventListener('mousedown', iniciarDibujo);
     canvas.addEventListener('mousemove', dibujar);
     window.addEventListener('mouseup', pararDibujo);
-    canvas.addEventListener('touchstart', iniciarDibujo);
-    canvas.addEventListener('touchmove', dibujar);
+    canvas.addEventListener('touchstart', iniciarDibujo, {passive: false});
+    canvas.addEventListener('touchmove', dibujar, {passive: false});
     window.addEventListener('touchend', pararDibujo);
 
     document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
@@ -187,7 +217,7 @@
       const notif = document.getElementById('notificacion');
       
       btn.disabled = true;
-      btn.innerText = "GUARDANDO REGISTRO Y FIRMA...";
+      btn.innerText = "PROCESANDO ENVÍO...";
       notif.classList.add('hidden');
 
       const selectP = document.getElementById('selectPersonal');
@@ -214,16 +244,18 @@
       .then(() => {
         btn.disabled = false;
         btn.innerText = "Registrar y Guardar Evidencia";
-        notif.className = "mt-4 p-4 rounded-lg text-sm text-center bg-emerald-900/50 border border-emerald-500 text-emerald-200 block";
-        notif.innerText = "REGISTRO DE CAPACITACIÓN ENVIADO CON ÉXITO";
+        notif.className = "mt-3 p-3 rounded-lg text-xs text-center bg-emerald-950 border border-emerald-500 text-emerald-200 block";
+        notif.innerText = "REGISTRO ENVIADO CON ÉXITO";
         document.getElementById('formCapacitacion').reset();
+        document.getElementById('buscarPersonal').value = "";
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         document.getElementById('seccionMatriz').classList.add('hidden');
+        renderizarListaPersonal(cacheCatalogos.personal);
       })
       .catch(() => {
         btn.disabled = false;
         btn.innerText = "Registrar y Guardar Evidencia";
-        notif.className = "mt-4 p-4 rounded-lg text-sm text-center bg-red-900/50 border border-red-500 text-red-200 block";
+        notif.className = "mt-3 p-3 rounded-lg text-xs text-center bg-red-950 border border-red-500 text-red-200 block";
         notif.innerText = "ERROR AL PROCESAR EL ENVÍO";
       });
     });
