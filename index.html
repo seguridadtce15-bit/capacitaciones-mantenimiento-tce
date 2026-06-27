@@ -48,9 +48,10 @@
     }
 
     .logo-empresa {
-      width: 55px;
-      height: 55px;
+      width: 65px; /* Un poco más amplio para que luzca bien el arco de TCE */
+      height: 50px;
       object-fit: contain;
+      border-radius: 4px;
     }
 
     .titulo-empresa {
@@ -195,7 +196,7 @@
 <div class="container">
   
   <div class="header-empresa">
-    <img src="https://seguridadtce15-bit.github.io/capacitaciones-mantenimiento-tce/logo.png" alt="Logo TCE" class="logo-empresa" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/a/ac/No_image_available.svg';">
+    <img src="https://docs.google.com/spreadsheets/d/1dvmR3yRWRjREfe6LVl74gHJ4sUxTb7DYjFkNfOn5c/embed/image?id=1238735111" alt="Logo TCE" class="logo-empresa">
     <div>
       <h1 class="titulo-empresa">Terminales de Cargas Especializadas S.A. de C.V.</h1>
     </div>
@@ -258,8 +259,8 @@
 </div>
 
 <script>
-  // ⚠️ COLOCA AQUÍ TU URL DE EJECUCIÓN (WEB APP) DE GOOGLE APPS SCRIPT
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwEnrnLhUy_a5Ieb7I4gpGxLCW6otsOpvWCmrDy8KMEYUKBzg_E4yEAQeTMFh2kHxhWfw/exec";
+  // ⚠️ REEMPLAZA ESTA VARIABLE CON TU URL DE WEB APP DE APPS SCRIPT
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxugEHmYAIorCGQebM99IKkgppzDyDV0n9-qoGVttMILie35zcMaq19i3iBzo4Japum4g/exec";
 
   let personalCache = [];
   let actividadesCache = [];
