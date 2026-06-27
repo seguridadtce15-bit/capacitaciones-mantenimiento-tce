@@ -36,7 +36,6 @@
       border: 1px solid #2d2d34;
     }
 
-    /* ENCABEZADO CORPORATIVO ALINEADO */
     .header-empresa {
       display: flex;
       align-items: center;
@@ -99,7 +98,6 @@
       border-color: var(--azul-acento);
     }
 
-    /* PANELES DE HISTORIAL DE CAPACITACIONES */
     .status-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -149,7 +147,6 @@
       display: none;
     }
 
-    /* CANVAS DE FIRMA DIGITAL */
     .firma-container {
       position: relative;
     }
@@ -264,8 +261,7 @@
 </div>
 
 <script>
-  // ⚠️ PON AQUÍ TU URL DE GOOGLE APPS SCRIPT
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzwFizCU86O1leUFApIJYabOSOeq8LsDlxd8pvi20ubK7nLBVxlQAASW0KU-YNCrqG6ew/exec";
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz_K5pmfwyTUuoU1CDhk5mxue62arNGQVScn55Wzote83rcU25TIP2SeEQWovpyBe8hYw/exec";
 
   let personalCache = [];
   let actividadesCache = [];
@@ -347,9 +343,6 @@
     document.getElementById('msgCargando').style.display = 'none';
   }
 
-  // ==========================================
-  // MANEJO DE FIRMA DIGITAL
-  // ==========================================
   function ajustarResolucionCanvas() {
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
@@ -404,9 +397,6 @@
     return !buffer.some(color => color !== 0);
   }
 
-  // ==========================================
-  // ENVÍO AL DO-POST
-  // ==========================================
   function procesarEnvio(forzar = false) {
     const idEmp = document.getElementById('idEmpleado').value;
     const nombreEmp = document.getElementById('buscadorEmpleado').value;
@@ -453,6 +443,7 @@
       btn.disabled = false;
       btn.innerText = "Registrar Capacitación";
 
+      // Lógica de detección de duplicados integrada
       if (!respuesta.exito && respuesta.duplicado) {
         const volverARegistrar = confirm(respuesta.mensaje);
         if (volverARegistrar) {
