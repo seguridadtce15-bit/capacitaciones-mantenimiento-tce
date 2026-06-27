@@ -265,7 +265,124 @@
 
 <script>
   // ⚠️ PON AQUÍ TU URL DE GOOGLE APPS SCRIPT
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbznBWLGbXtvN2hPAPpIUfumsiV19p1mO10YhzsRyJPt5iiO9jONBspaSb1Kw8d0-oqltg/exec";
+  const WEB_APP_URL = "function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  if (e && e.parameter && e.parameter.accion === "obtenerEstatus") {
+    var estatus = getEstatusEmpleado(e.parameter.idEmpleado);
+    return ContentService.createTextOutput(JSON.stringify(estatus))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
+  var catalogo = getCatalogos();
+  return ContentService.createTextOutput(JSON.stringify(catalogo))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  try {
+    var datos = JSON.parse(e.postData.contents);
+    
+    if (datos.accion === "obtenerEstatus") {
+      var estatus = getEstatusEmpleado(datos.idEmpleado);
+      return ContentService.createTextOutput(JSON.stringify(estatus))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (datos.accion === "guardar") {
+      var resultado = guardarCapacitacion(datos.payload);
+      return ContentService.createTextOutput(JSON.stringify(resultado))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+  } catch(err) {
+    return ContentService.createTextOutput(JSON.stringify({exito: false, mensaje: err.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function getCatalogos() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetPersonal = ss.getSheetByName('Personal');
+  var dataPersonal = sheetPersonal.getDataRange().getValues();
+  var listaPersonal = [];
+  
+  for (var i = 1; i < dataPersonal.length; i++) {
+    if (dataPersonal[i][4] === 'Activo') {
+      listaPersonal.push({ id: dataPersonal[i][0], nombre: dataPersonal[i][1], puesto: dataPersonal[i][2] });
+    }
+  }
+  
+  var sheetActividades = ss.getSheetByName('Actividades');
+  var dataActividades = sheetActividades.getDataRange().getValues();
+  var listaActividades = [];
+  for (var j = 1; j < dataActividades.length; j++) {
+    listaActividades.push({ id: dataActividades[j][0], nombre: dataActividades[j][1] });
+  }
+  
+  return { personal: listaPersonal, actividades: listaActividades };
+}
+
+function getEstatusEmpleado(idEmpleado) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetHistorial = ss.getSheetByName('Historial');
+  var sheetActividades = ss.getSheetByName('Actividades');
+  
+  var dataHistorial = sheetHistorial.getDataRange().getValues();
+  var dataActividades = sheetActividades.getDataRange().getValues();
+  
+  var todosLosCursos = {};
+  for(var i = 1; i < dataActividades.length; i++) {
+    todosLosCursos[dataActividades[i][0]] = dataActividades[i][1];
+  }
+  
+  var tomados = [];
+  for(var j = 1; j < dataHistorial.length; j++) {
+    if(dataHistorial[j][2] == idEmpleado && dataHistorial[j][7] == 'Aprobado') {
+      var idCurso = dataHistorial[j][4];
+      if(!tomados.includes(idCurso)) tomados.push(idCurso);
+    }
+  }
+  
+  var completados = [];
+  var faltantes = [];
+  for(var id in todosLosCursos) {
+    if(tomados.includes(id)) { completados.push(todosLosCursos[id]); } 
+    else { faltantes.push(todosLosCursos[id]); }
+  }
+  return { completados: completados, faltantes: faltantes };
+}
+
+function guardarCapacitacion(payload) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheetHistorial = ss.getSheetByName('Historial');
+  
+  var idRegistro = "REG-" + new Date().getTime();
+  var urlFirma = "No firmó";
+  
+  if(payload && payload.firmaBase64 && payload.firmaBase64.includes(",")) {
+    var folderId = "1Bi7CmqfAff_PN9Tj6HIcMM-xTkpHmg3_"; 
+    var folder = DriveApp.getFolderById(folderId);
+    var base64Data = payload.firmaBase64.split(",")[1];
+    var blob = Utilities.newBlob(Utilities.base64Decode(base64Data), "image/png", idRegistro + "_firma.png");
+    var archivoFirma = folder.createFile(blob);
+    urlFirma = archivoFirma.getUrl();
+  }
+  
+  sheetHistorial.appendRow([
+    idRegistro, 
+    new Date(), 
+    payload.idEmpleado, 
+    payload.nombreEmpleado,
+    payload.idActividad, 
+    payload.nombreActividad, 
+    payload.instructor, 
+    payload.estatus, 
+    urlFirma
+  ]);
+  
+  return { exito: true, mensaje: "Guardado con ID: " + idRegistro };
+}";
 
   let personalCache = [];
   let actividadesCache = [];
