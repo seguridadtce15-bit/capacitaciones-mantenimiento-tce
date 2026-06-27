@@ -2,263 +2,269 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Capacitación y Control de Firmas</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Capacitaciones de Mantenimiento</title>
   <style>
-    .glow-blue { box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.4); }
-    canvas { touch-action: none; }
-    /* Optimización de scrollbars finos para móvil */
-    .custom-scroll::-webkit-scrollbar { width: 4px; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    /* Estilos profesionales optimizados para uso en teléfono celular */
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 15px;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+    h2 {
+      text-align: center;
+      color: #1a365d;
+      margin-top: 0;
+      font-size: 1.4rem;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 10px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #4a5568;
+    }
+    input[type="text"], select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 1rem;
+      background-color: #fff;
+    }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #3182ce;
+      box-shadow: 0 0 0 3px rgba(66,153,225,0.15);
+    }
+    .btn-guardar {
+      width: 100%;
+      padding: 14px;
+      background-color: #2b6cb0;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-guardar:active {
+      background-color: #1a365d;
+    }
+    /* Estilo simple para área de firma (puedes integrar tu canvas aquí) */
+    .firma-placeholder {
+      border: 2px dashed #cbd5e0;
+      height: 120px;
+      background: #fafafa;
+      text-align: center;
+      line-height: 120px;
+      color: #718096;
+      border-radius: 8px;
+    }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased selection:bg-blue-500/30">
+<body>
 
-  <div class="max-w-md mx-auto p-3 sm:p-4">
-    
-    <header class="text-center my-4 border-b border-slate-800 pb-3">
-      <h1 class="text-lg font-black tracking-wider text-blue-400 uppercase">Terminales de Cargas Especializadas</h1>
-      <p class="text-[10px] text-slate-400 mt-0.5 uppercase tracking-widest font-semibold">Matriz de Cumplimiento Digital</p>
-    </header>
-
-    <form id="formCapacitacion" class="bg-slate-800/90 backdrop-blur-md p-4 rounded-xl border border-slate-700/70 shadow-2xl space-y-4">
-      
-      <div class="space-y-1.5">
-        <label class="block text-xs font-bold text-blue-300 uppercase tracking-wide">1. Colaborador</label>
-        
-        <input type="text" id="buscarPersonal" placeholder="🔍 Escribe para buscar trabajador..." 
-               class="w-full bg-slate-950 border border-slate-700 focus:border-blue-500 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none transition-colors placeholder:text-slate-500">
-        
-        <select id="selectPersonal" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
-          <option value="">Cargando lista de personal...</option>
-        </select>
-      </div>
-
-      <div id="seccionMatriz" class="hidden bg-slate-950/80 p-3 rounded-lg border border-slate-800 space-y-2.5 animated fadeIn">
-        <h4 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1">Estatus del Colaborador en Turno:</h4>
-        <div class="grid grid-cols-1 gap-2.5 text-xs">
-          <div class="bg-slate-900/60 p-2 rounded border border-emerald-950">
-            <span class="text-emerald-400 font-bold block mb-1 flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Cursos Acreditados:
-            </span>
-            <ul id="listaHechos" class="list-none pl-1 space-y-1 text-slate-300 max-h-24 overflow-y-auto custom-scroll"></ul>
-          </div>
-          <div class="bg-slate-900/60 p-2 rounded border border-red-950">
-            <span class="text-red-400 font-bold block mb-1 flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-red-500 inline-block"></span> Cursos Pendientes:
-            </span>
-            <ul id="listaFaltantes" class="list-none pl-1 space-y-1 text-slate-300 max-h-28 overflow-y-auto custom-scroll"></ul>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-1.5">
-        <label class="block text-xs font-bold text-blue-300 uppercase tracking-wide">2. Curso Impartido</label>
-        <select id="selectActividad" required class="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-sm focus:outline-none focus:border-blue-500 transition-colors">
-          <option value="">Cargando cursos...</option>
-        </select>
-      </div>
-
-      <div class="grid grid-cols-2 gap-2.5">
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Estatus</label>
-          <select id="estatus" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500">
-            <option value="Aprobado">Aprobado</option>
-            <option value="Pendiente">Pendiente</option>
-            <option value="Reprobado">Reprobado</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-400 uppercase mb-1">Instructor</label>
-          <input type="text" id="instructor" required placeholder="Nombre" class="w-full bg-slate-950 border border-slate-700 rounded-lg p-2.5 text-xs focus:outline-none focus:border-blue-500 text-slate-200 placeholder:text-slate-600">
-        </div>
-      </div>
-
-      <div class="border border-slate-700/60 p-2.5 rounded-lg bg-slate-950/40 space-y-2">
-        <div class="flex justify-between items-center">
-          <label class="block text-xs font-bold text-amber-400 uppercase tracking-wide">3. Firma del Trabajador</label>
-          <button type="button" id="btnLimpiarFirma" class="text-[10px] bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-300 px-2.5 py-1 rounded font-bold uppercase tracking-wider transition-colors">Limpiar</button>
-        </div>
-        <div class="bg-white rounded-lg overflow-hidden border border-slate-700 shadow-inner">
-          <canvas id="canvasFirma" class="w-full h-28 bg-white cursor-crosshair"></canvas>
-        </div>
-        <p class="text-[9px] text-slate-500 text-center italic leading-none">Dibuje la firma directamente con el dedo sobre el recuadro blanco.</p>
-      </div>
-
-      <button type="submit" id="btnGuardar" class="w-full bg-blue-600 active:bg-blue-700 hover:bg-blue-500 text-white font-black py-3.5 px-4 rounded-xl uppercase tracking-wider text-xs transition-all glow-blue cursor-pointer">
-        Registrar y Guardar Evidencia
-      </button>
-
-    </form>
-
-    <div id="notificacion" class="hidden mt-3 p-3 rounded-lg text-xs text-center font-bold uppercase tracking-wide shadow-md"></div>
-
+<div class="container">
+  <h2>Registro de Capacitación</h2>
+  
+  <div class="form-group">
+    <label for="buscadorEmpleado">Colaborador:</label>
+    <input type="text" id="buscadorEmpleado" list="listaPersonal" placeholder="Escribe nombre del colaborador..." autocomplete="off">
+    <datalist id="listaPersonal"></datalist>
+    <input type="hidden" id="idEmpleado">
+    <input type="hidden" id="puestoEmpleado">
   </div>
 
-  <script>
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwRVdfDkM2I86JuV0V06Gc_AK1_9S-Exlu174OBy1d1WPJDsIB6EAByAzPQrhrmM-QbHA/exec";
+  <div class="form-group">
+    <label for="selectActividad">Curso Impartido:</label>
+    <select id="selectActividad">
+      <option value="">Seleccione un curso...</option>
+    </select>
+  </div>
 
-    let cacheCatalogos = { personal: [], actividades: [] };
-    const canvas = document.getElementById('canvasFirma');
-    const ctx = canvas.getContext('2d');
-    let dibujando = false;
+  <div class="form-group">
+    <label for="inputInstructor">Instructor:</label>
+    <input type="text" id="inputInstructor" placeholder="Nombre del instructor">
+  </div>
 
-    function ajustarCanvas() {
-      canvas.width = canvas.parentElement.clientWidth;
-      canvas.height = 112; // Altura ideal compacta para móviles
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "#000000";
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+  <div class="form-group">
+    <label for="selectEstatus">Estatus:</label>
+    <select id="selectEstatus">
+      <option value="Aprobado">Aprobado</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="Reprobado">Reprobado</option>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Firma de Conformidad:</label>
+    <div class="firma-placeholder">[ Espacio para Firma Digital ]</div>
+  </div>
+
+  <button class="btn-guardar" id="btnRegistrar" onclick="procesarEnvio(false)">Registrar Capacitación</button>
+</div>
+
+<script>
+  // ⚠️ REEMPLAZA CON TU URL DE EJECUCIÓN (WEB APP) DE GOOGLE APPS SCRIPT
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxhDbBbLv6t6cMMRfeEHpw4dR782-cU0QUqwTAo0ZXy03fPcqrzZEyFZ6oFJWHrCO4fzg/exec";
+
+  // Variables globales para almacenar catálogos cargados
+  let personalCache = [];
+  let actividadesCache = [];
+
+  // Al cargar la página, traemos los catálogos automáticamente de Sheets
+  window.addEventListener('DOMContentLoaded', () => {
+    fetch(WEB_APP_URL)
+      .then(response => response.json())
+      .then(data => {
+        personalCache = data.personal;
+        actividadesCache = data.actividades;
+        
+        // Inicializar los componentes visuales
+        renderAutocompletarPersonal(data.personal);
+        renderSelectActividades(data.actividades);
+      })
+      .catch(err => alert("Error cargando catálogos iniciales: " + err));
+  });
+
+  // Renderiza la lista oculta <datalist> para el autocompletado
+  function renderAutocompletarPersonal(personal) {
+    const datalist = document.getElementById('listaPersonal');
+    datalist.innerHTML = '';
+    personal.forEach(emp => {
+      const option = document.createElement('option');
+      option.value = emp.nombre; 
+      datalist.appendChild(option);
+    });
+  }
+
+  // Renderiza el selector de cursos/actividades
+  function renderSelectActividades(actividades) {
+    const select = document.getElementById('selectActividad');
+    actividades.forEach(act => {
+      const option = document.createElement('option');
+      option.value = act.id;
+      option.textContent = act.nombre;
+      select.appendChild(option);
+    });
+  }
+
+  // Detecta en tiempo real cuando seleccionan un colaborador válido del buscador
+  document.getElementById('buscadorEmpleado').addEventListener('input', (e) => {
+    const seleccionado = personalCache.find(emp => emp.nombre === e.target.value);
+    if (seleccionado) {
+      document.getElementById('idEmpleado').value = seleccionado.id;
+      document.getElementById('puestoEmpleado').value = seleccionado.puesto;
+    } else {
+      document.getElementById('idEmpleado').value = '';
+      document.getElementById('puestoEmpleado').value = '';
+    }
+  });
+
+  // PROCESA EL ENVÍO HACIA GOOGLE APPS SCRIPT CON EL CANDADO DE SEGURIDAD
+  function procesarEnvio(forzar = false) {
+    const idEmp = document.getElementById('idEmpleado').value;
+    const nombreEmp = document.getElementById('buscadorEmpleado').value;
+    const puestoEmp = document.getElementById('puestoEmpleado').value;
+    const idAct = document.getElementById('selectActividad').value;
+    const instructor = document.getElementById('inputInstructor').value;
+    const estatus = document.getElementById('selectEstatus').value;
+
+    const selectAct = document.getElementById('selectActividad');
+    const nombreAct = selectAct.options[selectAct.selectedIndex]?.text || '';
+
+    // Validación básica en el teléfono antes de lanzar la conexión
+    if (!idEmp || !idAct) {
+      alert("⚠️ Por favor seleccione un Colaborador válido de la lista y un Curso.");
+      return;
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      ajustarCanvas();
-      fetch(WEB_APP_URL)
-        .then(res => res.json())
-        .then(cargarFormulario)
-        .catch(() => {
-           document.getElementById('notificacion').className = "mt-3 p-3 rounded-lg text-xs text-center bg-red-950 border border-red-500 text-red-200 block";
-           document.getElementById('notificacion').innerText = "ERROR DE CONEXIÓN CON LA API";
-        });
-    });
-
-    // Evento para ajustar si rotan la pantalla del celular
-    window.addEventListener('resize', ajustarCanvas);
-
-    function cargarFormulario(catalogos) {
-      cacheCatalogos = catalogos;
-      
-      const selectActividad = document.getElementById('selectActividad');
-      selectActividad.innerHTML = '<option value="">-- Seleccione el Curso --</option>';
-      catalogos.actividades.forEach(act => {
-        selectActividad.innerHTML += `<option value="${act.id}">${act.nombre}</option>`;
-      });
-
-      renderizarListaPersonal(catalogos.personal);
-    }
-
-    // Función core para renderizar el listado
-    function renderizarListaPersonal(lista) {
-      const selectPersonal = document.getElementById('selectPersonal');
-      selectPersonal.innerHTML = '<option value="">-- Seleccione un Colaborador --</option>';
-      lista.forEach(pers => {
-        selectPersonal.innerHTML += `<option value="${pers.id}" data-nombre="${pers.nombre}">${pers.nombre}</option>`;
-      });
-    }
-
-    // FILTRO EN TIEMPO REAL: Evita saturar la vista del usuario
-    document.getElementById('buscarPersonal').addEventListener('input', function() {
-      const termino = this.value.toLowerCase().trim();
-      if (!termino) {
-        renderizarListaPersonal(cacheCatalogos.personal);
-        return;
-      }
-      const filtrados = cacheCatalogos.personal.filter(p => p.nombre.toLowerCase().includes(termino));
-      renderizarListaPersonal(filtrados);
-    });
-
-    document.getElementById('selectPersonal').addEventListener('change', function() {
-      const idEmpleado = this.value;
-      if(!idEmpleado) {
-        document.getElementById('seccionMatriz').classList.add('hidden');
-        return;
-      }
-
-      document.getElementById('listaHechos').innerHTML = '<li class="text-[11px] text-slate-400 italic">Buscando en historial...</li>';
-      document.getElementById('listaFaltantes').innerHTML = '<li class="text-[11px] text-slate-400 italic">Buscando en historial...</li>';
-      document.getElementById('seccionMatriz').classList.remove('hidden');
-      
-      fetch(`${WEB_APP_URL}?accion=obtenerEstatus&idEmpleado=${idEmpleado}`)
-        .then(res => res.json())
-        .then(estatus => {
-          const listaHechos = document.getElementById('listaHechos');
-          const listaFaltantes = document.getElementById('listaFaltantes');
-          
-          listaHechos.innerHTML = estatus.completados.length ? '' : '<li class="text-slate-500 italic">Ningún curso registrado</li>';
-          estatus.completados.forEach(c => listaHechos.innerHTML += `<li class="py-0.5 border-b border-slate-900/40 text-slate-200">✓ ${c}</li>`);
-          
-          listaFaltantes.innerHTML = estatus.faltantes.length ? '' : '<li class="text-emerald-400 font-semibold italic">Esquema 100% Completo</li>';
-          estatus.faltantes.forEach(c => listaFaltantes.innerHTML += `<li class="py-0.5 border-b border-slate-900/40 text-slate-300">📌 ${c}</li>`);
-        })
-        .catch(() => {
-          document.getElementById('listaHechos').innerHTML = '<li class="text-red-400">Error de conexión</li>';
-          document.getElementById('listaFaltantes').innerHTML = '<li class="text-red-400">Error de conexión</li>';
-        });
-    });
-
-    // Control de trazos táctiles optimizados (Sin saltos ni retrasos en iOS/Android)
-    const obtenerPosicion = (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return { x: clientX - rect.left, y: clientY - rect.top };
+    // Estructurar el paquete de datos (payload)
+    const payloadData = {
+      idEmpleado: idEmp,
+      nombreEmpleado: nombreEmp,
+      puestoEmpleado: puestoEmp,
+      idActividad: idAct,
+      nombreActividad: nombreAct,
+      instructor: instructor || "Sin Instructor",
+      estatus: estatus,
+      firmaBase64: "data:image/png;base64,", // Sustituye con el base64 real de tu firma si usas canvas
+      forzarGuardado: forzar
     };
 
-    const iniciarDibujo = (e) => { dibujando = true; ctx.beginPath(); const pos = obtenerPosicion(e); ctx.moveTo(pos.x, pos.y); };
-    const dibujar = (e) => { if (!dibujando) return; if(e.touches) e.preventDefault(); const pos = obtenerPosicion(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
-    const pararDibujo = () => { dibujando = false; };
+    // Bloquear el botón temporalmente por UX móvil
+    const btn = document.getElementById('btnRegistrar');
+    btn.disabled = true;
+    btn.innerText = "Guardando...";
 
-    canvas.addEventListener('mousedown', iniciarDibujo);
-    canvas.addEventListener('mousemove', dibujar);
-    window.addEventListener('mouseup', pararDibujo);
-    canvas.addEventListener('touchstart', iniciarDibujo, {passive: false});
-    canvas.addEventListener('touchmove', dibujar, {passive: false});
-    window.addEventListener('touchend', pararDibujo);
-
-    document.getElementById('btnLimpiarFirma').addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    });
-
-    document.getElementById('formCapacitacion').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const btn = document.getElementById('btnGuardar');
-      const notif = document.getElementById('notificacion');
-      
-      btn.disabled = true;
-      btn.innerText = "PROCESANDO ENVÍO...";
-      notif.classList.add('hidden');
-
-      const selectP = document.getElementById('selectPersonal');
-      const optionP = selectP.options[selectP.selectedIndex];
-      const selectA = document.getElementById('selectActividad');
-      const optionA = selectA.options[selectA.selectedIndex];
-
-      const payload = {
-        idEmpleado: selectP.value,
-        nombreEmpleado: optionP.getAttribute('data-nombre'),
-        idActividad: selectA.value,
-        nombreActividad: optionA.text,
-        instructor: document.getElementById('instructor').value,
-        estatus: document.getElementById('estatus').value,
-        firmaBase64: canvas.toDataURL()
-      };
-
-      fetch(WEB_APP_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ accion: "guardar", payload: payload })
+    // Envío por POST al servidor
+    fetch(WEB_APP_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        accion: "guardar",
+        payload: payloadData
       })
-      .then(() => {
-        btn.disabled = false;
-        btn.innerText = "Registrar y Guardar Evidencia";
-        notif.className = "mt-3 p-3 rounded-lg text-xs text-center bg-emerald-950 border border-emerald-500 text-emerald-200 block";
-        notif.innerText = "REGISTRO ENVIADO CON ÉXITO";
-        document.getElementById('formCapacitacion').reset();
-        document.getElementById('buscarPersonal').value = "";
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        document.getElementById('seccionMatriz').classList.add('hidden');
-        renderizarListaPersonal(cacheCatalogos.personal);
-      })
-      .catch(() => {
-        btn.disabled = false;
-        btn.innerText = "Registrar y Guardar Evidencia";
-        notif.className = "mt-3 p-3 rounded-lg text-xs text-center bg-red-950 border border-red-500 text-red-200 block";
-        notif.innerText = "ERROR AL PROCESAR EL ENVÍO";
-      });
+    })
+    .then(res => res.json())
+    .then(respuesta => {
+      btn.disabled = false;
+      btn.innerText = "Registrar Capacitación";
+
+      // Si el servidor detecta duplicado (exito = false y duplicado = true)
+      if (!respuesta.exito && respuesta.duplicado) {
+        // Lanzamos la ventana nativa de confirmación (SÍ / NO) en el celular
+        const volverARegistrar = confirm(respuesta.mensaje);
+        if (volverARegistrar) {
+          // Si pulsa "Aceptar", relanzamos la función forzando el salto de validación
+          procesarEnvio(true);
+        } else {
+          alert("Registro cancelado. No se generaron duplicados.");
+        }
+      } 
+      // Si el registro fue completamente exitoso
+      else if (respuesta.exito) {
+        alert("✅ " + respuesta.mensaje);
+        limpiarFormulario();
+      } else {
+        alert("⚠️ Error: " + respuesta.mensaje);
+      }
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.innerText = "Registrar Capacitación";
+      alert("Error de conexión: " + err);
     });
-  </script>
+  }
+
+  // Limpia los campos operativos para quedar listos para la siguiente firma
+  function limpiarFormulario() {
+    document.getElementById('buscadorEmpleado').value = '';
+    document.getElementById('idEmpleado').value = '';
+    document.getElementById('puestoEmpleado').value = '';
+    document.getElementById('selectActividad').value = '';
+    document.getElementById('inputInstructor').value = '';
+    document.getElementById('selectEstatus').value = 'Aprobado';
+  }
+</script>
+
 </body>
 </html>
