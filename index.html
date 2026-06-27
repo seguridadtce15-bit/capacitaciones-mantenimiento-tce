@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Capacitaciones de Mantenimiento</title>
   <style>
-    /* VARIABLES DE DISEÑO INDUSTRIAL MODO OSCURO */
     :root {
       --bg-principal: #121214;
       --bg-tarjeta: #1e1e24;
@@ -14,7 +13,8 @@
       --borde: #374151;
       --azul-acento: #3b82f6;
       --azul-active: #1d4ed8;
-      --amarillo-alerta: #eab308;
+      --verde-exito: #10b981;
+      --rojo-alerta: #ef4444;
     }
 
     body {
@@ -38,12 +38,10 @@
 
     h2 {
       text-align: center;
-      color: var(--txt-principal);
       margin-top: 0;
       font-size: 1.3rem;
       border-bottom: 2px solid var(--borde);
       padding-bottom: 12px;
-      letter-spacing: 0.5px;
     }
 
     .form-group {
@@ -60,63 +58,102 @@
       letter-spacing: 0.5px;
     }
 
-    /* INPUTS ADAPTADOS PARA PANTALLAS TÁCTILES MÓVILES */
     input[type="text"], select {
       width: 100%;
-      padding: 14px; /* Tamaño ideal para manipulación con dedos */
+      padding: 14px;
       border: 1px solid var(--borde);
       border-radius: 10px;
       box-sizing: border-box;
       font-size: 1rem;
       background-color: #2a2a32;
       color: var(--txt-principal);
-      transition: border-color 0.2s, box-shadow 0.2s;
     }
 
     input[type="text"]:focus, select:focus {
       outline: none;
       border-color: var(--azul-acento);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
     }
 
-    /* CONTENEDOR DE FIRMA TÁCTIL (CANVAS) */
+    /* PANELES DE STATUS DE CAPACITACIONES */
+    .status-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .panel-cursos {
+      background: #25252d;
+      border-radius: 8px;
+      padding: 10px;
+      border: 1px solid var(--borde);
+      max-height: 150px;
+      overflow-y: auto;
+    }
+
+    .panel-titulo {
+      font-size: 0.75rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--borde);
+    }
+
+    .titulo-completados { color: var(--verde-exito); }
+    .titulo-faltantes { color: var(--rojo-alerta); }
+
+    .lista-items {
+      margin: 0;
+      padding-left: 14px;
+      font-size: 0.8rem;
+      color: #e5e7eb;
+      line-height: 1.4;
+    }
+
+    .lista-items li {
+      margin-bottom: 4px;
+    }
+
+    .cargando-status {
+      font-size: 0.8rem;
+      color: #eab308;
+      font-style: italic;
+      text-align: center;
+      grid-column: span 2;
+      display: none;
+    }
+
+    /* FIRMA TÁCTIL */
     .firma-container {
       position: relative;
-      margin-top: 6px;
     }
 
     canvas {
       width: 100%;
-      height: 150px;
-      background-color: #ffffff; /* Fondo blanco para contraste del trazo negro de la firma */
+      height: 130px;
+      background-color: #ffffff;
       border: 2px solid var(--borde);
       border-radius: 10px;
-      touch-action: none; /* Crucial: Previene que la pantalla del cel se mueva al firmar */
-      cursor: crosshair;
+      touch-action: none;
     }
 
     .firma-botones {
       display: flex;
       justify-content: flex-end;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
     .btn-limpiar {
-      padding: 6px 14px;
+      padding: 6px 12px;
       background-color: #374151;
       color: #f3f4f6;
       border: none;
       border-radius: 6px;
-      font-size: 0.8rem;
-      font-weight: 600;
+      font-size: 0.75rem;
       cursor: pointer;
     }
 
-    .btn-limpiar:active {
-      background-color: #4b5563;
-    }
-
-    /* BOTÓN PRINCIPAL DE REGISTRO */
     .btn-guardar {
       width: 100%;
       padding: 15px;
@@ -128,19 +165,10 @@
       font-weight: bold;
       cursor: pointer;
       margin-top: 14px;
-      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
-      transition: background 0.2s;
     }
 
-    .btn-guardar:active {
-      background-color: var(--azul-active);
-    }
-
-    .btn-guardar:disabled {
-      background-color: #4b5563;
-      color: #9ca3af;
-      cursor: not-allowed;
-    }
+    .btn-guardar:active { background-color: var(--azul-active); }
+    .btn-guardar:disabled { background-color: #4b5563; color: #9ca3af; }
   </style>
 </head>
 <body>
@@ -154,6 +182,20 @@
     <datalist id="listaPersonal"></datalist>
     <input type="hidden" id="idEmpleado">
     <input type="hidden" id="puestoEmpleado">
+  </div>
+
+  <div class="status-container">
+    <div id="msgCargando" class="cargando-status">Consultando historial en Sheets...</div>
+    
+    <div class="panel-cursos">
+      <div class="panel-titulo titulo-completados">✓ Realizados</div>
+      <ul id="listaCompletados" class="lista-items"></ul>
+    </div>
+    
+    <div class="panel-cursos">
+      <div class="panel-titulo titulo-faltantes">✗ Pendientes</div>
+      <ul id="listaFaltantes" class="lista-items"></ul>
+    </div>
   </div>
 
   <div class="form-group">
@@ -191,23 +233,19 @@
 </div>
 
 <script>
-  // ⚠️ REEMPLAZA CON LA URL DE TU WEB APP DE GOOGLE APPS SCRIPT
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxJSDv3hfnZVAopXWGkwBOFK1wdzqijWzoECPJbqpdhed0IUOnz42JoMdiG1TTV3kMDBA/exec";
+  // ⚠️ COLOCA AQUÍ TU URL DE EJECUCIÓN (WEB APP) DE GOOGLE APPS SCRIPT
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzXySN8h5TL7LaacXygBMdQ8615m5faehlAw_6ySiEhAN_Yqejn_MOXcCHcWM59TXcpCQ/exec";
 
   let personalCache = [];
   let actividadesCache = [];
-  
-  // Variables de control del Canvas de firma
   const canvas = document.getElementById('canvasFirma');
   const ctx = canvas.getContext('2d');
   let dibujando = false;
 
-  // Ajustar la resolución interna del canvas al iniciar
   window.addEventListener('DOMContentLoaded', () => {
     ajustarResolucionCanvas();
     inicializarEventosFirma();
 
-    // Cargar catálogos desde Sheets
     fetch(WEB_APP_URL)
       .then(response => response.json())
       .then(data => {
@@ -239,63 +277,86 @@
     });
   }
 
+  // DETECTA SELECCIÓN DE COLABORADOR Y DISPARA LA CONSULTA EN TIEMPO REAL
   document.getElementById('buscadorEmpleado').addEventListener('input', (e) => {
     const seleccionado = personalCache.find(emp => emp.nombre === e.target.value);
     if (seleccionado) {
       document.getElementById('idEmpleado').value = seleccionado.id;
       document.getElementById('puestoEmpleado').value = seleccionado.puesto;
+      
+      // Llamamos a la consulta cruzada de estatus en Sheets
+      consultarEstatusCursos(seleccionado.id);
     } else {
       document.getElementById('idEmpleado').value = '';
       document.getElementById('puestoEmpleado').value = '';
+      limpiarPanelesStatus();
     }
   });
 
+  // CONSULTA LOS CURSOS COMPLETADOS Y FALTANTES DIRECTAMENTE DEL SCRIPT DEL SERVIDOR
+  function consultarEstatusCursos(idEmpleado) {
+    const msg = document.getElementById('msgCargando');
+    msg.style.display = 'block';
+    
+    fetch(`${WEB_APP_URL}?accion=obtenerEstatus&idEmpleado=${idEmpleado}`)
+      .then(res => res.json())
+      .then(estatus => {
+        msg.style.display = 'none';
+        
+        const ulCompletados = document.getElementById('listaCompletados');
+        const ulFaltantes = document.getElementById('listaFaltantes');
+        
+        ulCompletados.innerHTML = estatus.completados.length ? estatus.completados.map(c => `<li>${c}</li>`).join('') : '<li>Ninguno</li>';
+        ulFaltantes.innerHTML = estatus.faltantes.length ? estatus.faltantes.map(f => `<li>${f}</li>`).join('') : '<li>Al día</li>';
+      })
+      .catch(err => {
+        msg.style.display = 'none';
+        console.error("Error al traer estatus:", err);
+      });
+  }
+
+  function limpiarPanelesStatus() {
+    document.getElementById('listaCompletados').innerHTML = '';
+    document.getElementById('listaFaltantes').innerHTML = '';
+    document.getElementById('msgCargando').style.display = 'none';
+  }
+
   // ==========================================
-  // LÓGICA E INICIALIZACIÓN DE LA FIRMA TÁCTIL
+  // MANEJO DE FIRMA DIGITAL
   // ==========================================
   function ajustarResolucionCanvas() {
-    // Sincroniza el tamaño de dibujo con el tamaño visual CSS
     canvas.width = canvas.offsetWidth;
     canvas.height = canvas.offsetHeight;
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
-    ctx.strokeStyle = "#000000"; // Tinta negra para almacenamiento limpio en Drive
+    ctx.strokeStyle = "#000000";
   }
 
   function inicializarEventosFirma() {
-    // Eventos para Computadora (Mouse)
     canvas.addEventListener('mousedown', (e) => { dibujando = true; dibujar(e); });
     canvas.addEventListener('mousemove', dibujar);
     window.addEventListener('mouseup', () => dibujando = false);
 
-    // Eventos para Celular (Touch screens)
     canvas.addEventListener('touchstart', (e) => {
       dibujando = true;
-      const touch = e.touches[0];
-      const pos = obtenerPosicionFirma(touch);
+      const pos = obtenerPosicionFirma(e.touches[0]);
       ctx.beginPath();
       ctx.moveTo(pos.x, pos.y);
       e.preventDefault();
     });
-    
     canvas.addEventListener('touchmove', (e) => {
       if (!dibujando) return;
-      const touch = e.touches[0];
-      const pos = obtenerPosicionFirma(touch);
+      const pos = obtenerPosicionFirma(e.touches[0]);
       ctx.lineTo(pos.x, pos.y);
       ctx.stroke();
       e.preventDefault();
     });
-    
     canvas.addEventListener('touchend', () => dibujando = false);
   }
 
   function obtenerPosicionFirma(e) {
     const rect = canvas.getBoundingClientRect();
-    return {
-      x: (e.clientX || e.pageX) - rect.left,
-      y: (e.clientY || e.pageY) - rect.top
-    };
+    return { x: (e.clientX || e.pageX) - rect.left, y: (e.clientY || e.pageY) - rect.top };
   }
 
   function dibujar(e) {
@@ -313,13 +374,12 @@
   }
 
   function canvasEstaVacio() {
-    // Valida si el trabajador pintó algo o dejó el recuadro intacto
     const buffer = new Uint32Array(ctx.getImageData(0, 0, canvas.width, canvas.height).data.buffer);
     return !buffer.some(color => color !== 0);
   }
 
   // ==========================================
-  // PROCESAMIENTO Y ENVÍO DEL FORMULARIO
+  // ENVÍO AL DO-POST
   // ==========================================
   function procesarEnvio(forzar = false) {
     const idEmp = document.getElementById('idEmpleado').value;
@@ -333,17 +393,14 @@
     const nombreAct = selectAct.options[selectAct.selectedIndex]?.text || '';
 
     if (!idEmp || !idAct) {
-      alert("⚠️ Por favor seleccione un Colaborador de la lista y un Curso.");
+      alert("⚠️ Por favor seleccione un Colaborador y un Curso.");
       return;
     }
 
     if (canvasEstaVacio()) {
-      alert("⚠️ Se requiere la firma del colaborador como evidencia de la capacitación.");
+      alert("⚠️ Se requiere la firma del colaborador como evidencia.");
       return;
     }
-
-    // Extraemos la firma del canvas directo a string Base64 transparente
-    const firmaImagenBase64 = canvas.toDataURL('image/png');
 
     const payloadData = {
       idEmpleado: idEmp,
@@ -353,20 +410,17 @@
       nombreActividad: nombreAct,
       instructor: instructor || "Sin Instructor",
       estatus: estatus,
-      firmaBase64: firmaImagenBase64,
+      firmaBase64: canvas.toDataURL('image/png'),
       forzarGuardado: forzar
     };
 
     const btn = document.getElementById('btnRegistrar');
     btn.disabled = true;
-    btn.innerText = "Guardando en Servidor...";
+    btn.innerText = "Guardando...";
 
     fetch(WEB_APP_URL, {
       method: "POST",
-      body: JSON.stringify({
-        accion: "guardar",
-        payload: payloadData
-      })
+      body: JSON.stringify({ accion: "guardar", payload: payloadData })
     })
     .then(res => res.json())
     .then(respuesta => {
@@ -378,7 +432,7 @@
         if (volverARegistrar) {
           procesarEnvio(true);
         } else {
-          alert("Registro cancelado. No se generaron duplicados.");
+          alert("Registro cancelado.");
         }
       } 
       else if (respuesta.exito) {
@@ -391,7 +445,7 @@
     .catch(err => {
       btn.disabled = false;
       btn.innerText = "Registrar Capacitación";
-      alert("Error de conexión: " + err);
+      alert("Error: " + err);
     });
   }
 
@@ -402,10 +456,10 @@
     document.getElementById('selectActividad').value = '';
     document.getElementById('inputInstructor').value = '';
     document.getElementById('selectEstatus').value = 'Aprobado';
+    limpiarPanelesStatus();
     limpiarFirma();
   }
   
-  // Ajustar canvas si el operador gira la pantalla del celular
   window.addEventListener('resize', ajustarResolucionCanvas);
 </script>
 
