@@ -36,12 +36,31 @@
       border: 1px solid #2d2d34;
     }
 
-    h2 {
-      text-align: center;
-      margin-top: 0;
-      font-size: 1.3rem;
+    /* ESTILOS DEL ENCABEZADO CORPORATIVO */
+    .header-empresa {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 15px;
+      padding-bottom: 15px;
       border-bottom: 2px solid var(--borde);
-      padding-bottom: 12px;
+    }
+
+    .logo-empresa {
+      width: 50px;
+      height: 50px;
+      object-fit: contain;
+    }
+
+    .titulo-empresa {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--txt-principal);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.3;
     }
 
     .form-group {
@@ -74,7 +93,7 @@
       border-color: var(--azul-acento);
     }
 
-    /* PANELES DE STATUS DE CAPACITACIONES */
+    /* PANELES DE HISTORIAL DE CAPACITACIONES */
     .status-container {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -124,7 +143,7 @@
       display: none;
     }
 
-    /* FIRMA TÁCTIL */
+    /* CANVAS DE FIRMA DIGITAL */
     .firma-container {
       position: relative;
     }
@@ -174,7 +193,13 @@
 <body>
 
 <div class="container">
-  <h2>Registro de Capacitación</h2>
+  
+  <div class="header-empresa">
+    <img src="logo.png" alt="Logo TCE" class="logo-empresa">
+    <div>
+      <h1 class="titulo-empresa">Terminales de Cargas Especializadas S.A. de C.V.</h1>
+    </div>
+  </div>
   
   <div class="form-group">
     <label for="buscadorEmpleado">Colaborador:</label>
@@ -233,8 +258,8 @@
 </div>
 
 <script>
-  // ⚠️ COLOCA AQUÍ TU URL DE EJECUCIÓN (WEB APP) DE GOOGLE APPS SCRIPT
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzXySN8h5TL7LaacXygBMdQ8615m5faehlAw_6ySiEhAN_Yqejn_MOXcCHcWM59TXcpCQ/exec";
+  // ⚠️ REEMPLAZA CON LA URL DE TU WEB APP DE GOOGLE APPS SCRIPT
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyIMpRqUK9X1lmpVRuPNUzt4W6aJTVPSvq9x7wZWkikzZxZx2AMtzYMtv_WSqBVl0vScQ/exec";
 
   let personalCache = [];
   let actividadesCache = [];
@@ -277,14 +302,11 @@
     });
   }
 
-  // DETECTA SELECCIÓN DE COLABORADOR Y DISPARA LA CONSULTA EN TIEMPO REAL
   document.getElementById('buscadorEmpleado').addEventListener('input', (e) => {
     const seleccionado = personalCache.find(emp => emp.nombre === e.target.value);
     if (seleccionado) {
       document.getElementById('idEmpleado').value = seleccionado.id;
       document.getElementById('puestoEmpleado').value = seleccionado.puesto;
-      
-      // Llamamos a la consulta cruzada de estatus en Sheets
       consultarEstatusCursos(seleccionado.id);
     } else {
       document.getElementById('idEmpleado').value = '';
@@ -293,7 +315,6 @@
     }
   });
 
-  // CONSULTA LOS CURSOS COMPLETADOS Y FALTANTES DIRECTAMENTE DEL SCRIPT DEL SERVIDOR
   function consultarEstatusCursos(idEmpleado) {
     const msg = document.getElementById('msgCargando');
     msg.style.display = 'block';
@@ -302,7 +323,6 @@
       .then(res => res.json())
       .then(estatus => {
         msg.style.display = 'none';
-        
         const ulCompletados = document.getElementById('listaCompletados');
         const ulFaltantes = document.getElementById('listaFaltantes');
         
